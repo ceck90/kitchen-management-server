@@ -83,19 +83,24 @@ public class StatsService {
     }
 
     public void update(LocalDateTime date, ItemStatus previous, ItemStatus now) {
-        Stats stats;
+        List<Stats> statsList;
         if (date == null) {
-            stats = statsRepository.findByDateRange(todayMidnight, tomorrowMidnight, singlePage).get(0);
+            statsList = statsRepository.findByDateRange(todayMidnight, tomorrowMidnight, singlePage);
         } else {
             try {
                 DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy");
-                stats = get(date.format(formatter), null).get(0);
+                statsList = get(date.format(formatter), null);
             } catch (ParseException exception) {
                 //TODO: handle with custom exp
                 throw new RuntimeException(exception);
             }
         }
 
+        if (statsList.isEmpty()) {
+            return;
+        }
+
+        Stats stats = statsList.get(0);
         Map<ItemStatus, Integer> map = stats.getStatusCount();
 
         if (now != null) {
