@@ -1,4 +1,4 @@
-name: km
+name: km-server
 
 services:
   km-server:
