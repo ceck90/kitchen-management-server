@@ -13,10 +13,12 @@ import org.springframework.transaction.annotation.Transactional;
 
 import jakarta.annotation.PostConstruct;
 import java.util.Comparator;
-import java.util.Iterator;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 @Service
 public class PlateKitchenMenuItemService extends CRUDService<String, PlateKitchenMenuItem> {
@@ -73,7 +75,10 @@ public class PlateKitchenMenuItemService extends CRUDService<String, PlateKitche
                     plate.getId(),
                     ItemStatus.TODO
                 ).isEmpty();
-                if (!hasQueuedItems && currentItems < maxItems) {
+                if (joinsOrderInProgress(plate, plateKitchenMenuItem)) {
+                    // same order already in progress on a plate that groups by order: no extra slot needed
+                    plateKitchenMenuItem.setStatus(ItemStatus.PROGRESS);
+                } else if (!hasQueuedItems && currentItems < maxItems) {
                     plateKitchenMenuItem.setStatus(ItemStatus.PROGRESS);
                 } else {
                     plateKitchenMenuItem.setStatus(ItemStatus.TODO);
@@ -121,7 +126,7 @@ public class PlateKitchenMenuItemService extends CRUDService<String, PlateKitche
                 int maxItems = nextPlate.getSlot().get(1);
 
                 if (nextItemStatus.equals(ItemStatus.PROGRESS)) {
-                    if (currentItems < maxItems) {
+                    if (currentItems < maxItems || joinsOrderInProgress(nextPlate, plateKitchenMenuItem)) {
                         refreshNextPlate = true;
                     } else {
                         plateKitchenMenuItem.setStatus(ItemStatus.TODO);
@@ -145,7 +150,7 @@ public class PlateKitchenMenuItemService extends CRUDService<String, PlateKitche
                 if (nextItemStatus.equals(ItemStatus.PROGRESS)) {
                     int currentItems = nextPlate.getSlot().get(0);
                     int maxItems = nextPlate.getSlot().get(1);
-                    if (currentItems < maxItems) {
+                    if (currentItems < maxItems || joinsOrderInProgress(nextPlate, plateKitchenMenuItem)) {
                         refreshNextPlate = true;
                     } else {
                         plateKitchenMenuItem.setStatus(ItemStatus.TODO);
@@ -195,7 +200,8 @@ public class PlateKitchenMenuItemService extends CRUDService<String, PlateKitche
     public void promoteQueuedItemsIfPossible(Plate plate) {
         int current = plate.getSlot().get(0);
         int max = plate.getSlot().get(1);
-        if (current >= max) {
+        // a full plate that groups by order can still take the queued items of an order already in progress
+        if (current >= max && !Boolean.TRUE.equals(plate.getGroupByOrder())) {
             return;
         }
 
@@ -205,23 +211,55 @@ public class PlateKitchenMenuItemService extends CRUDService<String, PlateKitche
                 ItemStatus.TODO
             );
         queuedItems.sort(Comparator.comparingInt(item -> isPriorityItem(item) ? 0 : 1));
-        Iterator<PlateKitchenMenuItem> it = queuedItems.iterator();
-        while (current < max && it.hasNext()) {
-            PlateKitchenMenuItem item = it.next();
+        Set<Integer> ordersInProgress = ordersInProgress(plate);
+        for (PlateKitchenMenuItem item : queuedItems) {
+            boolean joinsTile = Boolean.TRUE.equals(plate.getGroupByOrder()) && ordersInProgress.contains(item.getOrderNumber());
+            if (!joinsTile && current >= max) {
+                // the plate is full, but later items may still join a tile already in progress
+                continue;
+            }
             item.setStatus(ItemStatus.PROGRESS);
             super.update(item);
             statsService.update(item.getCreatedDate(), ItemStatus.TODO, ItemStatus.PROGRESS);
-            current++;
+            if (!joinsTile) {
+                current++;
+                ordersInProgress.add(item.getOrderNumber());
+            }
         }
 
         refreshSlot(plate);
     }
 
     private void refreshSlot(Plate plate) {
-        long count = ((PlateKitchenMenuItemJPARepository) repository)
-                .countByPlateIdAndStatus(plate.getId(), ItemStatus.PROGRESS);
-        plate.getSlot().set(0, (int) count);
+        plate.getSlot().set(0, countOccupiedSlots(plate));
         plateService.update(plate);
+    }
+
+    /**
+     * Slots taken by the items in progress on the plate: one per item, or one per order when the plate
+     * groups the items of the same order in a single tile.
+     */
+    public int countOccupiedSlots(Plate plate) {
+        if (Boolean.TRUE.equals(plate.getGroupByOrder())) {
+            return ordersInProgress(plate).size();
+        }
+        return (int) ((PlateKitchenMenuItemJPARepository) repository)
+                .countByPlateIdAndStatus(plate.getId(), ItemStatus.PROGRESS);
+    }
+
+    private Set<Integer> ordersInProgress(Plate plate) {
+        return ((PlateKitchenMenuItemJPARepository) repository)
+                .findByPlateIdAndStatusOrderByCreatedDateAsc(plate.getId(), ItemStatus.PROGRESS)
+                .stream()
+                .map(PlateKitchenMenuItem::getOrderNumber)
+                .collect(Collectors.toCollection(HashSet::new));
+    }
+
+    private boolean joinsOrderInProgress(Plate plate, PlateKitchenMenuItem item) {
+        return plate != null
+                && Boolean.TRUE.equals(plate.getGroupByOrder())
+                && item.getOrderNumber() != null
+                && ordersInProgress(plate).contains(item.getOrderNumber());
     }
 
 

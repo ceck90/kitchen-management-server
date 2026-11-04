@@ -143,6 +143,15 @@ public class PlateService extends CRUDService<String, Plate> {
         }
     }
 
+    /**
+     * Update of the plate settings (name, capacity, categories, grouping...). The occupied slots are not a setting:
+     * they are recomputed from the items in progress, so editing a plate never resets them.
+     */
+    public Plate updateSettings(Plate plate) {
+        plate.setSlot(List.of(plateKitchenMenuItemService.countOccupiedSlots(plate), plate.getSlot().get(1)));
+        return update(plate);
+    }
+
     public Plate patchEnable(final String id, final Boolean enable) {
         List<PlateKitchenMenuItemDTO> items = plateKitchenMenuItemService.findByPlateId(id);
 

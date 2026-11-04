@@ -23,6 +23,12 @@ public class PlateController extends RESTController<String, Plate> {
         this.plateKitchenMenuItemService = plateKitchenMenuItemService;
     }
 
+    @Override
+    @PutMapping
+    public ResponseEntity<Plate> update(@RequestBody Plate plate) {
+        return ResponseEntity.ok(((PlateService) super.service).updateSettings(plate));
+    }
+
     @GetMapping("/status/{id}")
     public ResponseEntity<List<PlateKitchenMenuItemDTO>> getPlateStatus(@PathVariable("id") String id) {
         return ResponseEntity.ok(plateKitchenMenuItemService.findByPlateId(id));
