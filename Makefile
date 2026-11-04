@@ -65,5 +65,5 @@ up-infra: clean-network check-env
 # Shut down base infrastructure, docker volumes are preserved
 .PHONY: down
 down:
-	$(DOCKER) compose --env-file .env -f ./docker/docker-compose.yml down -v
+	$(DOCKER) compose --env-file .env -f ./docker/docker-compose.yml down
 	$(DOCKER) network remove $(NETWORK_NAME)
