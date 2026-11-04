@@ -1,3 +1,5 @@
+name: km
+
 services:
   km-server:
     build:
