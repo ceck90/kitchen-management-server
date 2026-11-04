@@ -2,18 +2,13 @@
 
 -- DROP FUNCTION public.menu_items_notify();
 
--- N.B.: adeguare la dichiarazione delle variabili per gli id delle categorie dei panini da considerare, sulla base di quanto definito nella tabella tipologie
+-- N.B.: nessun filtro per categoria: tutte le righe vengono notificate e salvate in orders_ack.
+-- E' il server cucina a scartare gli articoli delle categorie non importate da GSG (tipologie visibili).
 CREATE OR REPLACE FUNCTION public.menu_items_notify()
  RETURNS trigger
  LANGUAGE plpgsql
 AS $function$
 declare
-	panini_cat_id INTEGER := 1;
-    piadine_cat_id INTEGER := 2;
-    toast_cat_id INTEGER := 7;
-    piatti_unici_cat_id INTEGER := 6;
-    panini_spec_cat_id INTEGER := 8;
-	isValidMenuItem INTEGER = 0;
 	json_result json;
 	v_txt text;
 	id INT;
@@ -33,13 +28,6 @@ declare
 BEGIN
 	RAISE NOTICE 'Nuova riga inserita nella tabella righe_articoli con id: %', NEW.id;
 
-	-- verifico se articolo inserito appartiene a una delle categorie gestibili dalle piastre
-	select count(ra.id) into isValidMenuItem
-    from righe_articoli ra
-    inner join tipologie t on ra.desc_tipologia = t.descrizione
-    where ra.id = new.id and t.id in (panini_cat_id, piadine_cat_id, toast_cat_id, piatti_unici_cat_id, panini_spec_cat_id);
-
-	if isValidMenuItem > 0 then
 		select json_build_object(
         'id', ra.id,
         'orderNumber', o.progressivo, 'tableNumber', o."numeroTavolo", 'date', o."data", 'time', o.ora, 'clientName', o.cliente,
@@ -55,6 +43,12 @@ BEGIN
         inner join tipologie t on a.id_tipologia = t.id
         inner join ordini o on o.id = r.id_ordine
         where ra.id = new.id;
+
+	-- riga senza articolo corrispondente (join vuota): non bloccare l'inserimento dell'ordine su GSG
+	if json_result is null then
+		RAISE NOTICE 'Riga articolo % senza articolo/tipologia associati, notifica non inviata', NEW.id;
+		RETURN NEW;
+	end if;
 
 	  	-- RAISE NOTICE 'Risultato JSON %', json_result;
 
@@ -88,9 +82,6 @@ BEGIN
 
         -- invio notifica
 	    EXECUTE FORMAT('NOTIFY plate_orders, ''%s''', v_txt);
-	else
-		RAISE NOTICE 'Categoria riga articolo non valida: %', NEW.pos_tipologia;
-	end if;
 
 	RETURN NEW;
 END;

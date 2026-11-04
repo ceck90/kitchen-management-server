@@ -163,15 +163,19 @@ public class PlateService extends CRUDService<String, Plate> {
             .orElseThrow(() -> new IllegalStateException("No free plate found for category " + categoryId));
     }
 
-    public Plate findCandidatePlate(String categoryId) {
+    /**
+     * Plate that should receive an item of the given category, if the category is associated
+     * to at least one enabled plate: the least loaded one.
+     */
+    public Optional<Plate> findCandidatePlateIfAny(String categoryId) {
         PlateRepository plateRepository = (PlateRepository) repository;
-        Sort sort = Sort.by(
-            Sort.Order.asc("slot.0"),   // meno carica
-            Sort.Order.desc("slot.1")   // a parità, più capiente
-        );
         return plateRepository.findCandidatePlates(categoryId, Sort.by("slot.0").ascending())
             .stream()
-            .findFirst()
+            .findFirst();
+    }
+
+    public Plate findCandidatePlate(String categoryId) {
+        return findCandidatePlateIfAny(categoryId)
             .orElseThrow(() -> new IllegalStateException("No plate associated to category " + categoryId));
     }
 

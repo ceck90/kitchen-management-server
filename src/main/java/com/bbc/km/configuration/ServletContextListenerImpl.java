@@ -88,6 +88,13 @@ public class ServletContextListenerImpl implements ServletContextListener {
                         orderAckService.saveOrder(orderAck);
                     }
 
+                    // items of categories not imported from GSG are not managed by the kitchen
+                    if (kmiService.getItemByExternalId(notifyDTO.getItem().getMenuItemId()) == null) {
+                        LOGGER.info("Menu item {} ({}) of category {} is not managed by the kitchen, skipped",
+                                notifyDTO.getItem().getMenuItemId(), notifyDTO.getItem().getMenuItemName(), notifyDTO.getItem().getCategoryName());
+                        return;
+                    }
+
                     for (int i = 0; i < notifyDTO.getItem().getQuantity(); i++) {
                         PlateKitchenMenuItem pkmiDto = this.mapPlateKitchenMenuItem(notifyDTO.getItem());
                         if (notifyDTO.getItem().getMenuItemNotes() != null && !notifyDTO.getItem().getMenuItemNotes().isEmpty()) {
@@ -157,7 +164,11 @@ public class ServletContextListenerImpl implements ServletContextListener {
                 // auto order insert
                 if (ServletContextListenerImpl.this.enableOrdersAutoInsert) {
                     Plate plate = this.retrievePlateFromCategory(kmi);
-                    result.setPlateId(plate.getId());
+                    if (plate != null) {
+                        result.setPlateId(plate.getId());
+                    } else {
+                        LOGGER.warn("No enabled plate for category {}, item {} queued without plate", kmi.getCategoryId(), kmi.getName());
+                    }
                     // update order status based 
                     // result.setStatus(ItemStatus.PROGRESS);
                     // if (plate.getSlot().get(0) >= plate.getSlot().get(1)) {
@@ -171,8 +182,7 @@ public class ServletContextListenerImpl implements ServletContextListener {
 
             private Plate retrievePlateFromCategory(KitchenMenuItem kmi) {
                 String categoryId = kmi.getCategoryId();
-                Plate result = plateService.findCandidatePlate(categoryId);
-                return result;
+                return plateService.findCandidatePlateIfAny(categoryId).orElse(null);
             }
 
             private PlateKitchenMenuItemDTO doc2Dto(PlateKitchenMenuItem doc) {

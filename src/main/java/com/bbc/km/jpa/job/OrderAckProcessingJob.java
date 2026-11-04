@@ -75,6 +75,13 @@ public class OrderAckProcessingJob {
                     order.setAck(true);
                     orderAckService.saveOrder(order);
 
+                    // items of categories not imported from GSG are not managed by the kitchen
+                    if (kmiService.getItemByExternalId(order.getMenuItemId()) == null) {
+                        LOGGER.info("OrderAckProcessingJob::processOrders menu item {} ({}) of category {} is not managed by the kitchen, skipped",
+                                order.getMenuItemId(), order.getMenuItemName(), order.getCategoryName());
+                        continue;
+                    }
+
                     for (int i = 0; i < order.getQuantity(); i++) {
                         PlateKitchenMenuItem pkmiDto = this.mapPlateKitchenMenuItem(order);
                         if (order.getMenuItemNotes() != null && !order.getMenuItemNotes().isEmpty()) {
@@ -159,7 +166,11 @@ public class OrderAckProcessingJob {
         // auto order insert
         if (this.enableOrdersAutoInsert) {
             Plate plate = this.retrievePlateFromCategory(kmi);
-            result.setPlateId(plate.getId());
+            if (plate != null) {
+                result.setPlateId(plate.getId());
+            } else {
+                LOGGER.warn("OrderAckProcessingJob::mapPlateKitchenMenuItem no enabled plate for category {}, item {} queued without plate", kmi.getCategoryId(), kmi.getName());
+            }
             // update order status based 
             // result.setStatus(ItemStatus.PROGRESS);
             // if (plate.getSlot().get(0) >= plate.getSlot().get(1)) {
@@ -204,8 +215,7 @@ public class OrderAckProcessingJob {
 
     private Plate retrievePlateFromCategory(KitchenMenuItem kmi) {
         String categoryId = kmi.getCategoryId();
-        Plate result = plateService.findCandidatePlate(categoryId);
-        return result;
+        return plateService.findCandidatePlateIfAny(categoryId).orElse(null);
     }
     
 }
