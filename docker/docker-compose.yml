@@ -15,6 +15,7 @@ services:
       - mfo-network
     environment:
       SERVER_PORT: 8080
+      TZ: ${TZ_SERVER:-Europe/Rome}
       POSTGRES_URL: jdbc:pgsql://${POSTGRES_HOST}:${POSTGRES_PORT}/${POSTGRES_DB}
       POSTGRES_JDBC_URL: jdbc:postgresql://${POSTGRES_HOST}:${POSTGRES_PORT}/${POSTGRES_DB}
       POSTGRES_USER: ${POSTGRES_USER}

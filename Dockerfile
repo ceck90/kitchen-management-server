@@ -15,5 +15,7 @@ USER app
 
 COPY --from=build /workspace/target/*.jar app.jar
 
+ENV TZ=Europe/Rome
+
 EXPOSE 8080
 ENTRYPOINT ["java", "-jar", "app.jar"]
