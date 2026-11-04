@@ -10,7 +10,7 @@ AS $function$
 declare
 	panini_cat_id INTEGER := 1;
     piadine_cat_id INTEGER := 2;
-    toast_cat_id INTEGER := 3;
+    toast_cat_id INTEGER := 7;
     piatti_unici_cat_id INTEGER := 6;
     panini_spec_cat_id INTEGER := 8;
 	isValidMenuItem INTEGER = 0;
