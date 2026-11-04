@@ -1,4 +1,4 @@
-FROM maven:3.8.6-eclipse-temurin-11 AS build
+FROM maven:3.9.16-eclipse-temurin-21 AS build
 WORKDIR /workspace
 
 COPY pom.xml .
@@ -7,7 +7,7 @@ RUN mvn -B dependency:go-offline
 COPY src ./src
 RUN mvn -B package -DskipTests
 
-FROM eclipse-temurin:11-jre-jammy
+FROM eclipse-temurin:21-jre-jammy
 WORKDIR /app
 
 RUN addgroup --system app && adduser --system --ingroup app app

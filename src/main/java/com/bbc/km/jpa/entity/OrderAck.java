@@ -1,6 +1,6 @@
 package com.bbc.km.jpa.entity;
 
-import javax.persistence.*;
+import jakarta.persistence.*;
 
 @Entity
 @Table(name = "orders_ack")

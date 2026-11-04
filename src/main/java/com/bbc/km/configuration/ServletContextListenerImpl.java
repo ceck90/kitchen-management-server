@@ -15,9 +15,6 @@ import com.bbc.km.service.PlateService;
 import com.bbc.km.jpa.service.OrderAckService;
 import com.bbc.km.websocket.PKMINotification;
 import com.bbc.km.websocket.PKMINotificationType;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.impossibl.postgres.api.jdbc.PGConnection;
 import com.impossibl.postgres.api.jdbc.PGNotificationListener;
 import org.slf4j.Logger;
@@ -27,9 +24,13 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Component;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.json.JsonMapper;
 
-import javax.servlet.ServletContextEvent;
-import javax.servlet.ServletContextListener;
+import jakarta.servlet.ServletContextEvent;
+import jakarta.servlet.ServletContextListener;
 import javax.sql.DataSource;
 import java.sql.SQLException;
 import java.sql.Statement;
@@ -43,7 +44,7 @@ public class ServletContextListenerImpl implements ServletContextListener {
     private static final String NOTIFICATION_TOPIC = "/topic/pkmi";
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ServletContextListenerImpl.class);
-    private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
+    private static final ObjectMapper OBJECT_MAPPER = JsonMapper.builder().build();
 
     private final PGConnection pgConnection;
 
@@ -102,7 +103,7 @@ public class ServletContextListenerImpl implements ServletContextListener {
                         notification.setPlateKitchenMenuItem(resultDto);
                         simpMessagingTemplate.convertAndSend(NOTIFICATION_TOPIC, notification);
                     }
-                } catch (JsonProcessingException e) {
+                } catch (JacksonException e) {
                     LOGGER.error("Failed json processing for ingested payload!", e);
                 }
             }

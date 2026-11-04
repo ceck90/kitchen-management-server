@@ -13,7 +13,6 @@ import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.params.provider.NullAndEmptySource;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.AdditionalAnswers;
-import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
@@ -37,7 +36,6 @@ public class StatsServiceTest {
 
     private final Stats today;
 
-    @Mock
     private StatsRepository statsRepository;
     private StatsService statsService;
 
@@ -47,6 +45,7 @@ public class StatsServiceTest {
 
     @BeforeAll
     public void beforeAll() {
+        statsRepository = Mockito.mock(StatsRepository.class);
         Mockito.when(statsRepository.findByDateRange(any(), any(), eq(singlePage)))
                 .thenAnswer(invocationOnMock -> {
                             LocalDateTime from = invocationOnMock.getArgument(0);
