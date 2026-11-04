@@ -20,6 +20,10 @@ public class Plate extends MongoDocument<String> {
      * @see <a href="https://github.com/BearBeerCompany/kitchen-management-server/issues/56">Feature Request #56</a>
      */
     private List<String> categories = new LinkedList<>();
+    /**
+     * When true the client shows the items of the same order as a single tile, completed with a single action.
+     */
+    private Boolean groupByOrder = false;
 
     public String getName() {
         return name;
@@ -75,5 +79,13 @@ public class Plate extends MongoDocument<String> {
 
     public void setCategories(List<String> categories) {
         this.categories = categories;
+    }
+
+    public Boolean getGroupByOrder() {
+        return groupByOrder;
+    }
+
+    public void setGroupByOrder(Boolean groupByOrder) {
+        this.groupByOrder = groupByOrder;
     }
 }
