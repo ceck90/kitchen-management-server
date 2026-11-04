@@ -4,6 +4,7 @@ import com.bbc.km.dto.PlateKitchenMenuItemDTO;
 import com.bbc.km.model.Plate;
 import com.bbc.km.service.PlateKitchenMenuItemService;
 import com.bbc.km.service.PlateService;
+import com.bbc.km.service.PlateSettingsSeedService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -16,17 +17,28 @@ import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 public class PlateController extends RESTController<String, Plate> {
 
     private final PlateKitchenMenuItemService plateKitchenMenuItemService;
+    private final PlateSettingsSeedService plateSettingsSeedService;
 
     public PlateController(PlateService plateService,
-                           PlateKitchenMenuItemService plateKitchenMenuItemService) {
+                           PlateKitchenMenuItemService plateKitchenMenuItemService,
+                           PlateSettingsSeedService plateSettingsSeedService) {
         super(plateService);
         this.plateKitchenMenuItemService = plateKitchenMenuItemService;
+        this.plateSettingsSeedService = plateSettingsSeedService;
     }
 
     @Override
     @PutMapping
     public ResponseEntity<Plate> update(@RequestBody Plate plate) {
         return ResponseEntity.ok(((PlateService) super.service).updateSettings(plate));
+    }
+
+    /**
+     * Migration of the plate options kept in the browser: applied only to the options not configured yet.
+     */
+    @PostMapping("/{id}/seed-settings")
+    public ResponseEntity<Plate> seedSettings(@PathVariable("id") String id, @RequestBody Plate settings) {
+        return ResponseEntity.ok(plateSettingsSeedService.seed(id, settings));
     }
 
     @GetMapping("/status/{id}")
