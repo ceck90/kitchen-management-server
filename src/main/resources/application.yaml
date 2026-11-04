@@ -35,7 +35,7 @@ application:
       fixedDelay: ${ORDER_ACK_FIXED_DELAY:60000}
       interval: ${ORDER_ACK_INTERVAL:120000}
   menu-item-notes-separator: /
-  enable-orders-auto-insert: false
+  enable-orders-auto-insert: ${ENABLE_ORDERS_AUTO_INSERT:false}
   priority-order-notes-regex: '(?i)\b(bambino|bambini|urgente)\b'
 logging:
   level:

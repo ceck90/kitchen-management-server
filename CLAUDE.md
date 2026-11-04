@@ -15,7 +15,7 @@ mvn deploy -DskipTests         # Publish to GitHub Packages
 
 ## Architecture Overview
 
-Spring Boot 2.7.5 / Java 11 backend for restaurant kitchen order management. Uses a **hybrid database architecture**:
+Spring Boot 4.1 / Java 21 backend for restaurant kitchen order management. Uses a **hybrid database architecture**:
 
 - **MongoDB** (`kitchenmgmt` db): Primary domain storage — plates, categories, kitchen menu items. Accessed via Spring Data MongoDB.
 - **PostgreSQL** (dual datasource): Transactional data. The `postgres` datasource uses the async `pgjdbc-ng` driver; the `ack` datasource uses the standard JDBC driver via Hikari. Schema is managed manually via SQL scripts in `src/main/resources/postgres/` (no Flyway/Liquibase).
