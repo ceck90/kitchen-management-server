@@ -20,6 +20,18 @@ public class Plate extends MongoDocument<String> {
      * @see <a href="https://github.com/BearBeerCompany/kitchen-management-server/issues/56">Feature Request #56</a>
      */
     private List<String> categories = new LinkedList<>();
+    /**
+     * When true the client shows the items of the same order as a single tile, completed with a single action.
+     */
+    private Boolean groupByOrder = false;
+    /**
+     * Quick move of the items to another plate. Null means never configured (the client may seed the value
+     * it used to keep in the browser).
+     */
+    private Boolean quickMoveEnabled;
+    private String quickMoveTargetPlateId;
+    /** Done button in the expanded view. Null means never configured. */
+    private Boolean expandedDoneButtonEnabled;
 
     public String getName() {
         return name;
@@ -75,5 +87,37 @@ public class Plate extends MongoDocument<String> {
 
     public void setCategories(List<String> categories) {
         this.categories = categories;
+    }
+
+    public Boolean getGroupByOrder() {
+        return groupByOrder;
+    }
+
+    public void setGroupByOrder(Boolean groupByOrder) {
+        this.groupByOrder = groupByOrder;
+    }
+
+    public Boolean getQuickMoveEnabled() {
+        return quickMoveEnabled;
+    }
+
+    public void setQuickMoveEnabled(Boolean quickMoveEnabled) {
+        this.quickMoveEnabled = quickMoveEnabled;
+    }
+
+    public String getQuickMoveTargetPlateId() {
+        return quickMoveTargetPlateId;
+    }
+
+    public void setQuickMoveTargetPlateId(String quickMoveTargetPlateId) {
+        this.quickMoveTargetPlateId = quickMoveTargetPlateId;
+    }
+
+    public Boolean getExpandedDoneButtonEnabled() {
+        return expandedDoneButtonEnabled;
+    }
+
+    public void setExpandedDoneButtonEnabled(Boolean expandedDoneButtonEnabled) {
+        this.expandedDoneButtonEnabled = expandedDoneButtonEnabled;
     }
 }
